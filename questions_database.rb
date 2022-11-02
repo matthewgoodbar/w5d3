@@ -54,6 +54,43 @@ class User
     def authored_replies
         Reply.find_by_user_id(@id)
     end
+
+    def followed_questions
+        QuestionFollow.followed_questions_for_user_id(@id)
+    end
+
+    def save
+        if @id
+            self.update
+        else
+            self.create
+        end
+    end
+
+    private
+    def create
+        QuestionsDatabase.instance.execute(<<-SQL, @fname, @lname)
+            INSERT INTO
+                users (fname, lname)
+            VALUES
+                (?, ?)
+        SQL
+
+        @id = QuestionsDatabase.instance.last_insert_row_id
+    end
+
+    def update 
+        QuestionsDatabase.instance.execute(<<-SQL, @fname, @lname, @id)
+            UPDATE
+                users
+            SET
+                fname = ?, lname = ?
+            WHERE 
+                id = ?
+        SQL
+    end
+    
+
 end
 
 class Question
@@ -99,7 +136,41 @@ class Question
         Reply.find_by_question_id(@id)
     end
 
+    def followers 
+        QuestionFollow.followers_for_question_id(@id)
+    end
 
+    def save
+        if @id
+            self.update
+        else
+            self.create
+        end
+    end
+
+    private
+    def create
+        QuestionsDatabase.instance.execute(<<-SQL, @user_id, @title, @body)
+            INSERT INTO
+                questions (user_id, title, body)
+            VALUES
+                (?, ?, ?)
+        SQL
+
+        @id = QuestionsDatabase.instance.last_insert_row_id
+    end
+
+    def update 
+        QuestionsDatabase.instance.execute(<<-SQL, @user_id, @title, @body, @id)
+            UPDATE
+                questions
+            SET
+                user_id = ?, title = ?, body = ?
+            WHERE 
+                id = ?
+        SQL
+    end
+    
 end
 
 class Reply
@@ -172,6 +243,37 @@ class Reply
         replies.map {|datum| Reply.new(datum)}
     end
 
+    def save
+        if @id
+            self.update
+        else
+            self.create
+        end
+    end
+
+    private
+    def create
+        QuestionsDatabase.instance.execute(<<-SQL, @user_id, @question_id, @parent_id, @body)
+            INSERT INTO
+                replies (user_id, question_id, parent_id, body)
+            VALUES
+                (?, ?, ?, ?)
+        SQL
+
+        @id = QuestionsDatabase.instance.last_insert_row_id
+    end
+
+    def update 
+        QuestionsDatabase.instance.execute(<<-SQL, @user_id, @question_id, @parent_id, @body, @id)
+            UPDATE
+                replies
+            SET
+                user_id = ?, question_id = ?, parent_id = ?, body = ?
+            WHERE 
+                id = ?
+        SQL
+    end
+
 end
 
 class QuestionFollow
@@ -199,6 +301,20 @@ class QuestionFollow
         SELECT * FROM question_follows f
         JOIN questions q ON f.question_id = q.id
         WHERE f.user_id = ?
+        SQL
+
+        return nil unless follows.length > 0
+        follows.map {|datum| Question.new(datum)}
+    end
+
+    def self.most_followed_questions(n)
+        follows =  QuestionsDatabase.instance.execute(<<-SQL,n)
+        SELECT * from questions q
+        JOIN question_follows f
+            on q.id = f.question_id
+        GROUP BY q.id
+        ORDER BY count(f.user_id) DESC
+        LIMIT ?
         SQL
 
         return nil unless follows.length > 0
@@ -238,9 +354,16 @@ end
 #TESTS
 #Reply#parent_reply #No child replies in DB right now
 #Reply#child_replies
+#self.most_followed_questions(n) #only 1 follow currently
 
-#QuestionFollow::followers_for_question_id
-#QuestionFollow::followed_questions_for_user_id
 
-p QuestionFollow.followed_questions_for_user_id(3)
+# harry_data = {'fname'=>'Harry', 'lname'=>'Potter'}
 
+# harry = User.new(harry_data)
+# harry.save
+
+# p User.all
+
+# q = Question.new('id'=>5,'user_id'=>'5', 'title'=>'nvm','body' =>'I figued it out')
+# q.save
+# p Question.all
