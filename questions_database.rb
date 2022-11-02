@@ -59,6 +59,10 @@ class User
         QuestionFollow.followed_questions_for_user_id(@id)
     end
 
+    def liked_questions
+        QuestionLike.liked_questions_for_user_id(@id)
+    end
+
     def save
         if @id
             self.update
@@ -138,6 +142,18 @@ class Question
 
     def followers 
         QuestionFollow.followers_for_question_id(@id)
+    end
+
+    def likers
+        QuestionLike.likers_for_question_id(@id)
+    end
+
+    def num_likes
+        QuestionLike.num_likes_for_question(@id)
+    end
+
+    def most_liked(n)
+        QuestionLike.most_liked_questions(n)
     end
 
     def save
@@ -287,7 +303,7 @@ class QuestionFollow
 
     def self.followers_for_question_id(question_id)
         follows = QuestionsDatabase.instance.execute(<<-SQL, question_id)
-        SELECT * FROM question_follows f
+        SELECT u.id, u.fname, u.lname FROM question_follows f
         JOIN users u ON f.user_id = u.id
         WHERE f.question_id = ?
         SQL
@@ -298,7 +314,7 @@ class QuestionFollow
 
     def self.followed_questions_for_user_id(user_id)
         follows = QuestionsDatabase.instance.execute(<<-SQL, user_id)
-        SELECT * FROM question_follows f
+        SELECT q.id, q.user_id, q.title, q.body FROM question_follows f
         JOIN questions q ON f.question_id = q.id
         WHERE f.user_id = ?
         SQL
@@ -329,6 +345,53 @@ class QuestionLike
         @id = options['id']
         @user_id = options['user_id']
         @question_id = options['question_id']
+    end
+
+    def self.likers_for_question_id(question_id)
+        users = QuestionsDatabase.instance.execute(<<-SQL, question_id)
+        SELECT u.id, u.fname, u.lname FROM question_likes l
+        JOIN users u ON l.user_id = u.id
+        WHERE l.question_id = ?
+        SQL
+
+        return nil unless users.length > 0
+        users.map {|datum| User.new(datum)}
+    end
+
+    def self.num_likes_for_question(question_id)
+        likes = QuestionsDatabase.instance.execute(<<-SQL, question_id)
+        SELECT COUNT(*) AS count
+        FROM question_likes l JOIN users u
+        ON l.user_id = u.id
+        WHERE l.question_id = ?
+        SQL
+
+        return likes[0]['count']
+    end
+
+    def self.liked_questions_for_user_id(user_id)
+        questions = QuestionsDatabase.instance.execute(<<-SQL, user_id)
+        SELECT q.id, q.user_id, q.title, q.body FROM question_likes l
+        JOIN questions q ON l.question_id = q.id
+        WHERE l.user_id = ?
+        SQL
+
+        return nil unless questions.length > 0
+        questions.map {|datum| Question.new(datum)}
+    end
+
+    def self.most_liked_questions(n)
+        questions = QuestionsDatabase.instance.execute(<<-SQL, n)
+        SELECT q.id, q.user_id, q.title, q.body
+        FROM question_likes l JOIN questions q
+        ON l.question_id = q.id
+        GROUP BY q.id
+        ORDER BY COUNT(l.user_id) DESC
+        LIMIT ?
+        SQL
+
+        return nil unless questions.length > 0
+        questions.map {|datum| Question.new(datum)}
     end
 end
 
@@ -367,3 +430,5 @@ end
 # q = Question.new('id'=>5,'user_id'=>'5', 'title'=>'nvm','body' =>'I figued it out')
 # q.save
 # p Question.all
+
+p QuestionLike.most_liked_questions(3)
