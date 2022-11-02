@@ -63,6 +63,18 @@ class User
         QuestionLike.liked_questions_for_user_id(@id)
     end
 
+    def average_karma
+
+        karma_counts = QuestionsDatabase.instance.execute(<<-SQL, @id)
+            Select CAST(count(ql.question_id ) AS FLOAT) / count(DISTINCT q.id ) AS AvgKarma
+            From questions q
+            Left Join question_likes ql
+                ON q.id = ql.question_id
+            where q.user_id = 1
+        SQL
+        karma_counts[0]['AvgKarma']
+    end
+
     def save
         if @id
             self.update

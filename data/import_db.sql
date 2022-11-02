@@ -68,6 +68,7 @@ INSERT INTO
 VALUES
     ((SELECT id FROM users WHERE fname = 'Marcos' AND lname = 'Henrich'), 'How do I use sql?', 'Pls help' ),
     ((SELECT id FROM users WHERE fname = 'Marcos' AND lname = 'Henrich'), 'do I have covid', 'pls I am so tired'),
+    ((SELECT id FROM users WHERE fname = 'Marcos' AND lname = 'Henrich'), 'why is matt so good at sql', 'what a guy'),
     ((SELECT id FROM users WHERE fname = 'Matthew' AND lname = 'Goodbar'), 'How is babby formed', 'how girl get prgent'),
     ((SELECT id FROM users WHERE fname = 'Tom' AND lname = 'Cruise'), 'How do I escape scientology prison?', 'asking for a friend');
 
@@ -84,4 +85,16 @@ VALUES
 INSERT INTO
     question_likes (user_id, question_id)
 VALUES
-    ((SELECT id FROM users WHERE fname = 'Barack' AND lname = 'Obama'),(SELECT id FROM questions WHERE title = 'How do I escape scientology prison?'));
+    ((SELECT id FROM users WHERE fname = 'Tom' AND lname = 'Cruise'),(SELECT id FROM questions WHERE title = 'How do I escape scientology prison?')),
+    ((SELECT id FROM users WHERE fname = 'Barack' AND lname = 'Obama'),(SELECT id FROM questions WHERE title = 'How do I escape scientology prison?')),
+    ((SELECT id FROM users WHERE fname = 'Marcos' AND lname = 'Henrich'),(SELECT id FROM questions WHERE title = 'How do I escape scientology prison?')),
+    ((SELECT id FROM users WHERE fname = 'Barack' AND lname = 'Obama'),(SELECT id FROM questions WHERE title = 'How is babby formed')),
+    ((SELECT id FROM users WHERE fname = 'Tom' AND lname = 'Cruise'),(SELECT id FROM questions WHERE title = 'How is babby formed')),
+    ((SELECT id FROM users WHERE fname = 'Matthew' AND lname = 'Goodbar'),(SELECT id FROM questions WHERE title = 'How do I use sql?')),
+    ((SELECT id FROM users WHERE fname = 'Matthew' AND lname = 'Goodbar'),(SELECT id FROM questions WHERE title = 'do I have covid'));
+
+
+
+
+
+
